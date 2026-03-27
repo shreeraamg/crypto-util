@@ -46,7 +46,7 @@ public class DekService {
 
         WrapResult result = cryptographyClient.wrapKey(WRAP_ALGORITHM, plaintextDek);
         String encryptedDek = Base64.getEncoder().encodeToString(result.getEncryptedKey());
-        String keyId = cryptographyClient.getKey().getId();
+        String keyId = result.getKeyId();
 
         return new WrappedDek(plaintextDek, encryptedDek, keyId);
     }

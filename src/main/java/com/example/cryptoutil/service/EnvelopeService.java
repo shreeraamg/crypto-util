@@ -17,14 +17,14 @@ import java.util.Set;
  */
 public class EnvelopeService {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private final DekService dekService;
     private final AesGcmCipher cipher;
-    private final ObjectMapper objectMapper;
 
     public EnvelopeService(DekService dekService) {
         this.dekService = dekService;
         this.cipher = new AesGcmCipher();
-        this.objectMapper = new ObjectMapper();
     }
 
     // =========================================================
@@ -103,7 +103,12 @@ public class EnvelopeService {
 
             for (String fieldPath : piiFields) {
                 String plaintext = extractString(result, fieldPath);
-                if (plaintext == null) continue; // field absent — skip silently
+                if (plaintext == null) {
+                    throw new CryptoException(
+                            "PII field path not found in payload: '" + fieldPath + "'. " +
+                                    "Encryption aborted to prevent accidental plaintext publish."
+                    );
+                }
 
                 String ciphertext = cipher.encrypt(plaintext, wrappedDek.plaintextDek());
                 EncryptedField encField = new EncryptedField(
@@ -111,12 +116,12 @@ public class EnvelopeService {
                         wrappedDek.encryptedDek(),
                         ciphertext
                 );
-                setField(result, fieldPath, objectMapper.convertValue(encField, Map.class));
+                setField(result, fieldPath, OBJECT_MAPPER.convertValue(encField, Map.class));
             }
 
             // Inject __enc block at root — carries shared keyId and encryptedDek
             result.put(EncryptionMetadata.PAYLOAD_KEY,
-                    objectMapper.convertValue(
+                    OBJECT_MAPPER.convertValue(
                             new EncryptionMetadata(wrappedDek.keyId(), wrappedDek.encryptedDek()),
                             Map.class
                     ));
@@ -151,7 +156,7 @@ public class EnvelopeService {
             throw new CryptoException("Missing __enc block — payload was not encrypted by this library");
         }
 
-        EncryptionMetadata metadata = objectMapper.convertValue(encBlock, EncryptionMetadata.class);
+        EncryptionMetadata metadata = OBJECT_MAPPER.convertValue(encBlock, EncryptionMetadata.class);
         byte[] plaintextDek = dekService.unwrap(metadata.encryptedDek());
 
         try {
@@ -185,7 +190,7 @@ public class EnvelopeService {
 
                 // Check if this nested map is an EncryptedField structure
                 if (isEncryptedField(nestedMap)) {
-                    EncryptedField ef = objectMapper.convertValue(nestedMap, EncryptedField.class);
+                    EncryptedField ef = OBJECT_MAPPER.convertValue(nestedMap, EncryptedField.class);
                     entry.setValue(cipher.decrypt(ef.ciphertext(), plaintextDek));
                 } else {
                     // Recurse into nested objects

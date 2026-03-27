@@ -23,8 +23,13 @@ import java.util.Set;
  *
  * <h2>Usage — plain Java (no Spring)</h2>
  * <pre>{@code
+ * CryptographyClient client = new CryptographyClientBuilder()
+ *     .keyIdentifier("https://your-vault.vault.azure.net/keys/your-kek")
+ *     .credential(new DefaultAzureCredentialBuilder().build())
+ *     .buildClient();
+ *
  * CryptoUtil cryptoUtil = CryptoUtil.builder()
- *     .cryptographyClient(myClient)
+ *     .cryptographyClient(client)
  *     .build();
  * }</pre>
  *

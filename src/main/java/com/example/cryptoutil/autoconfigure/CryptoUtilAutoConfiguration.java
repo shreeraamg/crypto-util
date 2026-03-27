@@ -3,7 +3,6 @@ package com.example.cryptoutil.autoconfigure;
 import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
 import com.example.cryptoutil.CryptoUtil;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -48,12 +47,13 @@ import org.springframework.context.annotation.Bean;
  */
 @AutoConfiguration
 @ConditionalOnClass(CryptographyClient.class)
-@ConditionalOnBean(CryptographyClient.class)
 public class CryptoUtilAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public CryptoUtil cryptoUtil(CryptographyClient cryptographyClient) {
+    public CryptoUtil cryptoUtil(
+            @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+            CryptographyClient cryptographyClient) {
         return new CryptoUtil(cryptographyClient);
     }
 
