@@ -1,0 +1,57 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'com.example'
+version = '0.0.1'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+    withJavadocJar()
+    withSourcesJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // ── Public API surface ────────────────────────────────────────────
+    api libs.azure.keyvault.keys
+
+    // ── Internal implementation ───────────────────────────────────────
+    implementation libs.bouncy.castle.provider
+
+    // ── Spring autoconfiguration (compile-time only) ──────────────────
+    compileOnly libs.spring.boot.autoconfigure
+    annotationProcessor libs.spring.boot.autoconfigure.processor
+
+    // ── Lombok ────────────────────────────────────────────────────────
+    compileOnly libs.lombok
+    annotationProcessor libs.lombok
+
+    // ── Test ──────────────────────────────────────────────────────────
+    testImplementation libs.spring.boot.starter.test
+    testRuntimeOnly libs.junit.platform.launcher
+    testCompileOnly libs.lombok
+    testAnnotationProcessor libs.lombok
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = 'crypto-util'
+                description = 'Envelope encryption utility for PII field encryption in Kafka messages'
+            }
+        }
+    }
+}
